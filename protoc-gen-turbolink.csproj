@@ -8,6 +8,7 @@
     <RootNamespace>protoc_gen_turbolink</RootNamespace>
     <AssemblyName>protoc-gen-turbolink</AssemblyName>
     <TargetFramework>net6.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishTrimmed>true</PublishTrimmed>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
