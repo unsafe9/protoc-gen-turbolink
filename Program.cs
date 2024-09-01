@@ -37,6 +37,7 @@ namespace protoc_gen_turbolink
             bool dumpCollection = false;
             bool generateServiceCode = true;
             bool generateJsonCode = false;
+            bool addPackageNamePrefixToService = false;
 
             if (request.HasParameter)
 			{
@@ -49,6 +50,7 @@ namespace protoc_gen_turbolink
                 dumpCollection = GetParam(paramDictionary, "DumpCollection", false);
                 generateServiceCode = GetParam(paramDictionary, "GenerateServiceCode", true);
                 generateJsonCode = GetParam(paramDictionary, "GenerateJsonCode", false);
+                addPackageNamePrefixToService = GetParam(paramDictionary, "AddPackageNamePrefixToService", false);
             }
 
             //create code generator reponse
@@ -57,7 +59,7 @@ namespace protoc_gen_turbolink
             response.SupportedFeatures = (ulong)CodeGeneratorResponse.Types.Feature.Proto3Optional;
 
             //gather and analysis information from all service files
-            TurboLinkCollection collection = new TurboLinkCollection();
+            TurboLinkCollection collection = new TurboLinkCollection(addPackageNamePrefixToService);
             string error;
             if (!collection.AnalysisServiceFiles(request, out error))
             {

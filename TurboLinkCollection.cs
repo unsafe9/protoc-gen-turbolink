@@ -245,16 +245,24 @@ namespace protoc_gen_turbolink
 	}
 	public class GrpcService
 	{
+		private readonly bool _addPackageNamePrefixToService;
+		public readonly string[] PackageNameAsList;
 		public readonly ServiceDescriptorProto ServiceDesc;
 		public string Name                                      //eg. "UserService"
 		{
-			get => ServiceDesc.Name;
+			get => (_addPackageNamePrefixToService ? CamelPackageName : "") + ServiceDesc.Name;
+		}
+		public string CamelPackageName                      //eg. "Greeter", "GoogleProtobuf"
+		{
+			get => string.Join(string.Empty, TurboLinkUtils.MakeCamelStringArray(PackageNameAsList));
 		}
 		public List<GrpcServiceMethod> MethodArray { get; set; }
 
-		public GrpcService(ServiceDescriptorProto serviceDesc)
+		public GrpcService(FileDescriptorProto protoFileDesc, ServiceDescriptorProto serviceDesc, bool addPackageNamePrefixToService)
 		{
 			ServiceDesc = serviceDesc;
+			PackageNameAsList = protoFileDesc.Package.Split('.').ToArray();
+			_addPackageNamePrefixToService = addPackageNamePrefixToService;
 		}
 	}
 	public class GrpcServiceFile
@@ -323,9 +331,15 @@ namespace protoc_gen_turbolink
 	}
 	public class TurboLinkCollection
 	{
+		private readonly bool _addPackageNamePrefixToService;
 		public string InputFileNames;
 		//key=ProtoFileName
 		public Dictionary<string, GrpcServiceFile> GrpcServiceFiles = new Dictionary<string, GrpcServiceFile>();
+		
+		public TurboLinkCollection(bool addPackageNamePrefixToService)
+		{
+			_addPackageNamePrefixToService = addPackageNamePrefixToService;
+		}
 
 		public bool AnalysisServiceFiles(CodeGeneratorRequest request, out string error)
 		{
@@ -561,7 +575,7 @@ namespace protoc_gen_turbolink
 
 			foreach (ServiceDescriptorProto service in serviceFile.ProtoFileDesc.Service)
 			{
-				GrpcService newService = new GrpcService(service);
+				GrpcService newService = new GrpcService(serviceFile.ProtoFileDesc, service, _addPackageNamePrefixToService);
 				newService.MethodArray = new List<GrpcServiceMethod>();
 
 				foreach (MethodDescriptorProto method in service.Method)
