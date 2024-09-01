@@ -255,9 +255,13 @@ namespace protoc_gen_turbolink
 		private readonly bool _addPackageNamePrefixToService;
 		public readonly string[] PackageNameAsList;
 		public readonly ServiceDescriptorProto ServiceDesc;
-		public string Name                                      //eg. "UserService"
+		public string Name                                      //eg. "GreeterUserService"
 		{
 			get => (_addPackageNamePrefixToService ? CamelPackageName : "") + ServiceDesc.Name;
+		}
+		public string ProtoName                                      //eg. "UserService"
+		{
+			get => ServiceDesc.Name;
 		}
 		public string CamelPackageName                      //eg. "Greeter", "GoogleProtobuf"
 		{

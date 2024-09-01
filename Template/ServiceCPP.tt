@@ -43,7 +43,7 @@ void U<#=service.Name#>::Connect()
 		d->Channel = TurboLinkManager->d->CreateServiceChannel((const char*)StringCast<UTF8CHAR>(*serviceEndPoint).Get(), this);
 	}
 	if (d->Stub == nullptr) {
-		d->Stub = <#=s.GrpcPackageName#>::<#=service.Name#>::NewStub(d->Channel->RpcChannel);
+		d->Stub = <#=s.GrpcPackageName#>::<#=service.ProtoName#>::NewStub(d->Channel->RpcChannel);
 	}
 
 	grpc_connectivity_state currentChannelState = d->Channel->RpcChannel->GetState(true);
