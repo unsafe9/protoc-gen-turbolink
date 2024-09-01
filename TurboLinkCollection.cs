@@ -64,25 +64,28 @@ namespace protoc_gen_turbolink
 	}
 	public class GrpcMessageField_Single : GrpcMessageField
 	{
-		public GrpcMessageField_Single(FieldDescriptorProto fieldDesc) : base(fieldDesc)
+		private readonly NamingParam _namingParam;
+		
+		public GrpcMessageField_Single(FieldDescriptorProto fieldDesc, NamingParam namingParam) : base(fieldDesc)
 		{
-			FieldDefaultValue = TurboLinkUtils.GetFieldDefaultValue(FieldDesc, FieldDesc.HasDefaultValue ? FieldDesc.DefaultValue : null);
+			FieldDefaultValue = TurboLinkUtils.GetFieldDefaultValue(FieldDesc, namingParam, FieldDesc.HasDefaultValue ? FieldDesc.DefaultValue : null);
+			_namingParam = namingParam;
 		}
 		public override string FieldType
 		{
-			get => TurboLinkUtils.GetFieldType(FieldDesc);
+			get => TurboLinkUtils.GetFieldType(FieldDesc, _namingParam);
 		}
 		public override string TypeAsNativeField
 		{
-			get => NeedNativeMake ? ("TSharedPtr<" + TurboLinkUtils.GetFieldType(FieldDesc) + ">") : FieldType;
+			get => NeedNativeMake ? ("TSharedPtr<" + TurboLinkUtils.GetFieldType(FieldDesc, _namingParam) + ">") : FieldType;
 		}
 	}
 	public class GrpcMessageField_Repeated : GrpcMessageField
 	{
 		public readonly GrpcMessageField ItemField;
-		public GrpcMessageField_Repeated(FieldDescriptorProto fieldDesc) : base(fieldDesc)
+		public GrpcMessageField_Repeated(FieldDescriptorProto fieldDesc, NamingParam namingParam) : base(fieldDesc)
 		{
-			ItemField = new GrpcMessageField_Single(fieldDesc);
+			ItemField = new GrpcMessageField_Single(fieldDesc, namingParam);
 		}
 		public override string FieldType
 		{
@@ -97,10 +100,10 @@ namespace protoc_gen_turbolink
 	{
 		public readonly GrpcMessageField KeyField;
 		public readonly GrpcMessageField ValueField;
-		public GrpcMessageField_Map(FieldDescriptorProto fieldDesc, FieldDescriptorProto keyField, FieldDescriptorProto valueField) : base(fieldDesc)
+		public GrpcMessageField_Map(FieldDescriptorProto fieldDesc, FieldDescriptorProto keyField, FieldDescriptorProto valueField, NamingParam namingParam) : base(fieldDesc)
 		{
-			KeyField = new GrpcMessageField_Single(keyField);
-			ValueField = new GrpcMessageField_Single(valueField);
+			KeyField = new GrpcMessageField_Single(keyField, namingParam);
+			ValueField = new GrpcMessageField_Single(valueField, namingParam);
 		}
 		public override string FieldType
 		{
@@ -138,10 +141,12 @@ namespace protoc_gen_turbolink
 
 	public class GrpcMessage
 	{
+		private readonly string _messagePrefix;
 		public readonly DescriptorProto MessageDesc;
 		public readonly GrpcServiceFile ServiceFile;
-		public GrpcMessage(DescriptorProto messageDesc, GrpcServiceFile serviceFile)
+		public GrpcMessage(DescriptorProto messageDesc, GrpcServiceFile serviceFile, string messagePrefix)
 		{
+			_messagePrefix = messagePrefix;
 			MessageDesc = messageDesc;
 			ServiceFile = serviceFile;
 			Fields = new List<GrpcMessageField>();
@@ -150,7 +155,7 @@ namespace protoc_gen_turbolink
 		public int Index { get; set; }
 		public virtual string Name                               //eg. "FGrpcGreeterHelloResponse",  "FGrpcGoogleProtobufValue"
 		{
-			get => "FGrpc" +
+			get => _messagePrefix +
 				ServiceFile.CamelPackageName +
 				TurboLinkUtils.JoinCamelString(ParentMessageNameList, string.Empty) +
 				CamelName;
@@ -180,7 +185,7 @@ namespace protoc_gen_turbolink
 		public readonly OneofDescriptorProto OneofDesc;
 		public readonly GrpcMessage ParentMessage;
 		public readonly GrpcEnum OneofEnum;
-		public GrpcMessage_Oneof(OneofDescriptorProto oneofDesc, GrpcMessage parentMessage, GrpcEnum oneofEnum) : base(null, parentMessage.ServiceFile)
+		public GrpcMessage_Oneof(OneofDescriptorProto oneofDesc, GrpcMessage parentMessage, GrpcEnum oneofEnum, string messagePrefix) : base(null, parentMessage.ServiceFile, messagePrefix)
 		{
 			OneofDesc = oneofDesc;
 			ParentMessage = parentMessage;
@@ -205,10 +210,12 @@ namespace protoc_gen_turbolink
 	}
 	public class GrpcServiceMethod
 	{
+		private readonly string _messagePrefix;
 		public readonly MethodDescriptorProto MethodDesc;
-		public GrpcServiceMethod(MethodDescriptorProto methodDesc)
+		public GrpcServiceMethod(MethodDescriptorProto methodDesc, string messagePrefix)
 		{
 			MethodDesc = methodDesc;
+			_messagePrefix = messagePrefix;
 		}
 		public string Name
 		{
@@ -224,7 +231,7 @@ namespace protoc_gen_turbolink
 		}
 		public string InputType                             //eg. "FGrpcUserRegisterRequest"
 		{
-			get => TurboLinkUtils.GetMessageName(MethodDesc.InputType);
+			get => TurboLinkUtils.GetMessageName(MethodDesc.InputType, _messagePrefix);
 		}
 		public string GrpcInputType                         //eg. "::User::RegisterRequest"
 		{
@@ -232,7 +239,7 @@ namespace protoc_gen_turbolink
 		}
 		public string OutputType                            //eg. "FGrpcUserRegisterResponse"
 		{
-			get => TurboLinkUtils.GetMessageName(MethodDesc.OutputType);
+			get => TurboLinkUtils.GetMessageName(MethodDesc.OutputType, _messagePrefix);
 		}
 		public string GrpcOutputType                        //eg. "::User::RegisterResponse"
 		{
@@ -332,13 +339,20 @@ namespace protoc_gen_turbolink
 	public class TurboLinkCollection
 	{
 		private readonly bool _addPackageNamePrefixToService;
+		private readonly NamingParam _namingParam;
 		public string InputFileNames;
 		//key=ProtoFileName
 		public Dictionary<string, GrpcServiceFile> GrpcServiceFiles = new Dictionary<string, GrpcServiceFile>();
 		
-		public TurboLinkCollection(bool addPackageNamePrefixToService)
+		public TurboLinkCollection(bool addPackageNamePrefixToService, string enumPrefix, string messagePrefix)
 		{
 			_addPackageNamePrefixToService = addPackageNamePrefixToService;
+			
+			_namingParam = new NamingParam
+			{
+				EnumPrefix = enumPrefix,
+				MessagePrefix = messagePrefix
+			};
 		}
 
 		public bool AnalysisServiceFiles(CodeGeneratorRequest request, out string error)
@@ -442,7 +456,7 @@ namespace protoc_gen_turbolink
 		{
 			GrpcEnum newEnum = new GrpcEnum();
 			newEnum.Name = string.Join(string.Empty,
-				"EGrpc", serviceFile.CamelPackageName, TurboLinkUtils.JoinString(parentNameList, string.Empty), enumDesc.Name);
+				_namingParam.EnumPrefix, serviceFile.CamelPackageName, TurboLinkUtils.JoinString(parentNameList, string.Empty), enumDesc.Name);
 
 			newEnum.DisplayName = serviceFile.CamelPackageName + "." + 
 				TurboLinkUtils.JoinString(parentNameList, ".") + 
@@ -475,7 +489,7 @@ namespace protoc_gen_turbolink
 		}
 		private void AddMessage(ref GrpcServiceFile serviceFile, string[] parentMessageNameList, DescriptorProto protoMessage)
 		{
-			GrpcMessage message = new GrpcMessage(protoMessage, serviceFile);
+			GrpcMessage message = new GrpcMessage(protoMessage, serviceFile, _namingParam.MessagePrefix);
 			message.ParentMessageNameList = parentMessageNameList;
 
 			//add nested message 
@@ -504,12 +518,12 @@ namespace protoc_gen_turbolink
 					GrpcEnum oneofEnum = new GrpcEnum();
 
 					//add oneof message 
-					GrpcMessage_Oneof oneofMessage = new GrpcMessage_Oneof(protoMessage.OneofDecl[i], message, oneofEnum);
+					GrpcMessage_Oneof oneofMessage = new GrpcMessage_Oneof(protoMessage.OneofDecl[i], message, oneofEnum, _namingParam.MessagePrefix);
 					oneofMessage.Index = serviceFile.MessageArray.Count;
 					serviceFile.MessageArray.Add(oneofMessage);
 
 					//add oneof enum
-					oneofEnum.Name = "EGrpc" + oneofMessage.Name.Substring(5);
+					oneofEnum.Name = _namingParam.EnumPrefix + oneofMessage.Name.Substring(5);
 					oneofEnum.DisplayName = oneofMessage.DisplayName;
 					oneofEnum.Fields = new List<GrpcEnumField>();
 					serviceFile.EnumArray.Add(oneofEnum);
@@ -525,15 +539,15 @@ namespace protoc_gen_turbolink
 				(isMapField, keyField, valueField) = TurboLinkUtils.IsMapField(field, protoMessage);
 				if (isMapField)
 				{
-					messageField = new GrpcMessageField_Map(field, keyField, valueField);
+					messageField = new GrpcMessageField_Map(field, keyField, valueField, _namingParam);
 				}
 				else if (field.Label == FieldDescriptorProto.Types.Label.Repeated)
 				{
-					messageField = new GrpcMessageField_Repeated(field);
+					messageField = new GrpcMessageField_Repeated(field, _namingParam);
 				}
 				else
 				{
-					messageField = new GrpcMessageField_Single(field);
+					messageField = new GrpcMessageField_Single(field, _namingParam);
 				}
 
 				if (field.HasOneofIndex)
@@ -580,7 +594,7 @@ namespace protoc_gen_turbolink
 
 				foreach (MethodDescriptorProto method in service.Method)
 				{
-					newService.MethodArray.Add(new GrpcServiceMethod(method));
+					newService.MethodArray.Add(new GrpcServiceMethod(method, _namingParam.MessagePrefix));
 				}
 				serviceFile.ServiceArray.Add(newService);
 			}

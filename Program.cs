@@ -12,7 +12,7 @@ namespace protoc_gen_turbolink
 {
     class Program
     {
-        static bool GetParam(Dictionary<string, string> paramDictionary, string paramName, bool defaultValue)
+        static bool GetBoolParam(Dictionary<string, string> paramDictionary, string paramName, bool defaultValue)
 		{
             if (!paramDictionary.ContainsKey(paramName))
             {
@@ -24,6 +24,14 @@ namespace protoc_gen_turbolink
                 return defaultValue;
             }
             return paramValue == "true" ? true : false;
+        }
+        static string GetStrParam(Dictionary<string, string> paramDictionary, string paramName, string defaultValue)
+		{
+            if (!paramDictionary.ContainsKey(paramName))
+            {
+                return defaultValue;
+            }
+            return paramDictionary[paramName];
         }
         static void Main(string[] args)
         {
@@ -38,6 +46,8 @@ namespace protoc_gen_turbolink
             bool generateServiceCode = true;
             bool generateJsonCode = false;
             bool addPackageNamePrefixToService = false;
+            string enumPrefix = "EGrpc";
+            string messagePrefix = "FGrpc";
 
             if (request.HasParameter)
 			{
@@ -46,11 +56,13 @@ namespace protoc_gen_turbolink
                     .GroupBy(param => param.Split('=')[0].Trim(), param => param.Split('=')[1].Trim())
                     .ToDictionary(x => x.Key, x => x.First());
 
-                dumpRequest = GetParam(paramDictionary, "DumpRequest", false);
-                dumpCollection = GetParam(paramDictionary, "DumpCollection", false);
-                generateServiceCode = GetParam(paramDictionary, "GenerateServiceCode", true);
-                generateJsonCode = GetParam(paramDictionary, "GenerateJsonCode", false);
-                addPackageNamePrefixToService = GetParam(paramDictionary, "AddPackageNamePrefixToService", false);
+                dumpRequest = GetBoolParam(paramDictionary, "DumpRequest", dumpRequest);
+                dumpCollection = GetBoolParam(paramDictionary, "DumpCollection", dumpCollection);
+                generateServiceCode = GetBoolParam(paramDictionary, "GenerateServiceCode", generateServiceCode);
+                generateJsonCode = GetBoolParam(paramDictionary, "GenerateJsonCode", generateJsonCode);
+                addPackageNamePrefixToService = GetBoolParam(paramDictionary, "AddPackageNamePrefixToService", addPackageNamePrefixToService);
+                enumPrefix = GetStrParam(paramDictionary, "EnumPrefix", enumPrefix);
+                messagePrefix = GetStrParam(paramDictionary, "MessagePrefix", messagePrefix);
             }
 
             //create code generator reponse
@@ -59,7 +71,7 @@ namespace protoc_gen_turbolink
             response.SupportedFeatures = (ulong)CodeGeneratorResponse.Types.Feature.Proto3Optional;
 
             //gather and analysis information from all service files
-            TurboLinkCollection collection = new TurboLinkCollection(addPackageNamePrefixToService);
+            TurboLinkCollection collection = new TurboLinkCollection(addPackageNamePrefixToService, enumPrefix, messagePrefix);
             string error;
             if (!collection.AnalysisServiceFiles(request, out error))
             {

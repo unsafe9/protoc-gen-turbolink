@@ -7,6 +7,12 @@ using Google.Protobuf.Reflection;
 
 namespace protoc_gen_turbolink
 {
+    public class NamingParam
+    {
+        public string EnumPrefix;
+        public string MessagePrefix;
+    }
+    
 	class TurboLinkUtils
 	{
         public static string MakeCamelString(string inputString)
@@ -44,14 +50,23 @@ namespace protoc_gen_turbolink
             var words = fileName.Split(new[] { "-", "_", " " }, StringSplitOptions.RemoveEmptyEntries);
             return string.Join(string.Empty, MakeCamelStringArray(words));
         }
-        public static string GetMessageName(string grpcName, string prefix="FGrpc")
+        private static string _getCamelTypeName(string grpcName)
         {
-            //eg.  ".Time.NowResponse"  -> "FGrpcTimeNowResponse"
-            //eg.  "authzed.api.v1.CheckRequest" => "FGrpcAuthzedApiV1CheckRequest"
+            //eg.  ".Time.NowResponse"  -> "TimeNowResponse"
+            //eg.  "authzed.api.v1.CheckRequest" => "AuthzedApiV1CheckRequest"
             string[] words = grpcName.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
-            return prefix + JoinCamelString(words, string.Empty);
+            return JoinCamelString(words, string.Empty);
         }
-        public static string GetFieldType(FieldDescriptorProto field)
+        public static string GetMessageName(string grpcName, string prefix)
+        {
+            return prefix + _getCamelTypeName(grpcName);
+        }
+        public static string GetEnumName(string grpcName, string prefix)
+        {
+            return prefix + _getCamelTypeName(grpcName);
+        }
+        
+        public static string GetFieldType(FieldDescriptorProto field, NamingParam param)
         {
             string ueType = "";
             switch (field.Type)
@@ -81,11 +96,11 @@ namespace protoc_gen_turbolink
                 case FieldDescriptorProto.Types.Type.Group:
                     break; //Group type is deprecated and not supported in proto3
                 case FieldDescriptorProto.Types.Type.Message:
-                    ueType += GetMessageName(field.TypeName); break;
+                    ueType += GetMessageName(field.TypeName, param.MessagePrefix); break;
                 case FieldDescriptorProto.Types.Type.Bytes:
                     ueType += "FBytes"; break;
                 case FieldDescriptorProto.Types.Type.Enum:
-                    ueType += GetMessageName(field.TypeName, "EGrpc"); break;
+                    ueType += GetMessageName(field.TypeName, param.EnumPrefix); break;
                 default:
                     ueType += "ERROR_TYPE"; break;
             }
@@ -102,7 +117,7 @@ namespace protoc_gen_turbolink
             }
             return fieldName;
         }
-        public static string GetFieldDefaultValue(FieldDescriptorProto field, string defaultValue)
+        public static string GetFieldDefaultValue(FieldDescriptorProto field, NamingParam namingParam, string defaultValue)
         {
             string finalDefaultValue = " = ";
             switch (field.Type)
@@ -128,7 +143,7 @@ namespace protoc_gen_turbolink
                     finalDefaultValue += defaultValue != null ? ("\"" + defaultValue + "\"") : "\"\""; 
                     break;
                 case FieldDescriptorProto.Types.Type.Enum:
-                    finalDefaultValue += defaultValue != null ? (GetFieldType(field) + "::" + defaultValue):("static_cast<" + GetFieldType(field) + ">(0)"); 
+                    finalDefaultValue += defaultValue != null ? (GetFieldType(field, namingParam) + "::" + defaultValue):("static_cast<" + GetFieldType(field, namingParam) + ">(0)"); 
                     break;
                 default:
                     return "";
