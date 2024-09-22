@@ -17,6 +17,7 @@ namespace protoc_gen_turbolink
 	{
         public bool GenerateServiceCode;
         public bool GenerateJsonCode;
+        public bool GenerateStringCode;
     }
     public class TurboLinkGenerator
     {
@@ -29,7 +30,7 @@ namespace protoc_gen_turbolink
             ProtoFile = protoFile;
             ServiceFile = serviceFile;
         }
-        public void BuildOutputFiles(bool generateServiceCode, bool generateJsonCode)
+        public void BuildOutputFiles(bool generateServiceCode, bool generateJsonCode, bool generateStringCode)
         {
             GeneratedFile file;
             string turboLinkBaseName = ServiceFile.TurboLinkBasicFileName;
@@ -37,6 +38,7 @@ namespace protoc_gen_turbolink
             GenerateParam generateParam;
             generateParam.GenerateServiceCode = generateServiceCode;
             generateParam.GenerateJsonCode = generateJsonCode;
+            generateParam.GenerateStringCode = generateStringCode;
 
             // xxxMarshaling.h
             Template.MarshalingH marshalingHTemplate = new Template.MarshalingH(ServiceFile, generateParam);

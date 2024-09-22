@@ -62,6 +62,11 @@ if(g.GenerateJsonCode && !(message is GrpcMessage_Oneof)) {
     DECLARE_JSON_FUNCTIONS()
 <#}#>
 <#
+if(g.GenerateStringCode && !(message is GrpcMessage_Oneof)) {
+#>
+    DECLARE_STRING_FUNCTIONS()
+<#}#>
+<#
 if(message is GrpcMessage_Oneof) {
 GrpcMessage_Oneof oneofMessage = (GrpcMessage_Oneof)message;
 #>
