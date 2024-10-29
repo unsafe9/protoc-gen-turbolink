@@ -527,7 +527,7 @@ namespace protoc_gen_turbolink
 					serviceFile.MessageArray.Add(oneofMessage);
 
 					//add oneof enum
-					oneofEnum.Name = _namingParam.EnumPrefix + oneofMessage.Name.Substring(5);
+					oneofEnum.Name = _namingParam.EnumPrefix + oneofMessage.Name.Substring(_namingParam.MessagePrefix.Length);
 					oneofEnum.DisplayName = oneofMessage.DisplayName;
 					oneofEnum.Fields = new List<GrpcEnumField>();
 					serviceFile.EnumArray.Add(oneofEnum);
