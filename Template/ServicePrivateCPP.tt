@@ -24,6 +24,7 @@ void U<#=service.Name#><#=method.Name#>LambdaWrapper::OnResponse(FGrpcContextHan
 			{
 #>
 	InnerClient->On<#=method.Name#>Response.RemoveDynamic(this, &U<#=service.Name#><#=method.Name#>LambdaWrapper::OnResponse);
+	RemoveFromRoot();
 <#
 			}
 #>
@@ -44,6 +45,7 @@ void U<#=service.Name#><#=method.Name#>LambdaWrapper::OnContextStateChanged(FGrp
 <#}#>
 		InnerClient->On<#=method.Name#>Response.RemoveDynamic(this, &U<#=service.Name#><#=method.Name#>LambdaWrapper::OnResponse);
 		InnerClient->OnContextStateChange.RemoveDynamic(this, &U<#=service.Name#><#=method.Name#>LambdaWrapper::OnContextStateChanged);
+		RemoveFromRoot();
 	}
 }
 

@@ -99,6 +99,7 @@ void U<#=service.Name#>::Call<#=method.Name#>(const <#=method.InputType#>& Reque
 	lambdaWrapper->FinishLambda = FinishLambda;
 <#}#>
 	lambdaWrapper->Handle = InnerClient->Init<#=method.Name#>();
+	lambdaWrapper->AddToRoot();
 	InnerClient->On<#=method.Name#>Response.AddUniqueDynamic(lambdaWrapper, &U<#=service.Name#><#=method.Name#>LambdaWrapper::OnResponse);
 <#
 			if(method.ServerStreaming) {
