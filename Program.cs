@@ -46,6 +46,7 @@ namespace protoc_gen_turbolink
             bool generateServiceCode = true;
             bool generateJsonCode = false;
             bool generateStringCode = false;
+            bool generateBinaryCode = false;
             bool addPackageNamePrefixToService = false;
             string enumPrefix = "EGrpc";
             string messagePrefix = "FGrpc";
@@ -62,6 +63,7 @@ namespace protoc_gen_turbolink
                 generateServiceCode = GetBoolParam(paramDictionary, "GenerateServiceCode", generateServiceCode);
                 generateJsonCode = GetBoolParam(paramDictionary, "GenerateJsonCode", generateJsonCode);
                 generateStringCode = GetBoolParam(paramDictionary, "GenerateStringCode", generateStringCode);
+                generateBinaryCode = GetBoolParam(paramDictionary, "GenerateBinaryCode", generateBinaryCode);
                 addPackageNamePrefixToService = GetBoolParam(paramDictionary, "AddPackageNamePrefixToService", addPackageNamePrefixToService);
                 enumPrefix = GetStrParam(paramDictionary, "EnumPrefix", enumPrefix);
                 messagePrefix = GetStrParam(paramDictionary, "MessagePrefix", messagePrefix);
@@ -86,7 +88,7 @@ namespace protoc_gen_turbolink
             foreach (GrpcServiceFile serviceFile in collection.GrpcServiceFiles.Values)
             {
                 TurboLinkGenerator generator = new TurboLinkGenerator(serviceFile.ProtoFileDesc, serviceFile);
-                generator.BuildOutputFiles(generateServiceCode, generateJsonCode, generateStringCode);
+                generator.BuildOutputFiles(generateServiceCode, generateJsonCode, generateStringCode, generateBinaryCode);
 
                 foreach (GeneratedFile generatedFile in generator.GeneratedFiles)
                 {

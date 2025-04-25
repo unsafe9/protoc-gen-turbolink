@@ -28,6 +28,11 @@ if(g.GenerateStringCode) {
 #>
 DEFINE_STRING_FUNCTIONS(<#=message.Name#>, ::<#=message.GrpcName#>)
 <#}#>
+<#
+if(g.GenerateBinaryCode) {
+#>
+DEFINE_BINARY_FUNCTIONS(<#=message.Name#>, ::<#=message.GrpcName#>)
+<#}#>
 <#}}#>
 
 <# 
